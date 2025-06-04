@@ -303,10 +303,33 @@ Access in browser:
 http://<external-ip>/
 ```
 
-#### ✅ Elastic Observability Dashboard
+### ✅ Elastic Observability Dashboard – Unified View of Metrics, Traces, and Logs
 
-* Traces → APM → Services → `fastapi`
-* Metrics → Infrastructure → Kubernetes → Pods
-* Logs → Logs → Stream
+To view observability data collected via OpenTelemetry and Elastic Agent in **Elastic Cloud**, follow these steps:
+
+#### 🔍 Go to **Discover** in Kibana
+
+You can explore your collected data using the **data views (DDL)**:
+
+* `logs-*` → View **application and infrastructure logs**
+* `metrics-*` → Explore **infrastructure and system metrics**
+* `APM` → Analyze **application traces and performance data**
+
+#### 📊 What Each Data View Offers:
+
+1. **logs-**\*
+
+   * Shows structured logs from apps and infrastructure
+   * Useful for error tracking, request logs, and custom log events
+
+2. **metrics-**\*
+
+   * Displays resource-level metrics (CPU, memory, disk, etc.)
+   * Collected from Elastic Agent or OpenTelemetry metrics exporters
+
+3. **APM**
+
+   * Displays distributed traces captured by OpenTelemetry
+   * Helps with end-to-end request path analysis and latency insights
 
 ---
