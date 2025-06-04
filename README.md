@@ -333,3 +333,179 @@ You can explore your collected data using the **data views (DDL)**:
    * Helps with end-to-end request path analysis and latency insights
 
 ---
+
+🚨 Troubleshooting: No Traces in Kubernetes
+❗ After deployment, I can’t see application-related view traces.
+
+
+## ✅ 1. Install Required Dependencies
+
+Update your `requirements.txt`:
+
+```txt
+fastapi
+uvicorn
+python-dotenv
+elastic-apm
+```
+
+> 📝 **Comment**:
+> These packages are required for FastAPI app runtime, env management, and APM instrumentation.
+
+---
+
+## ✅ 2. FastAPI App Setup with Elastic APM
+
+Edit `app/main.py`:
+
+```python
+import os
+from dotenv import load_dotenv
+from fastapi import FastAPI
+from elasticapm.contrib.starlette import make_apm_client, ElasticAPM
+
+# 🧪 Load .env variables
+load_dotenv()
+
+# 🛠️ APM configuration from env
+apm_config = {
+    "SERVICE_NAME": os.getenv("APM_SERVICE_NAME"),
+    "SERVER_URL": os.getenv("APM_SERVER_URL"),
+    "SECRET_TOKEN": os.getenv("APM_SECRET_TOKEN"),
+    "ENVIRONMENT": os.getenv("APM_ENVIRONMENT"),
+}
+
+# 🔌 Initialize APM client
+apm = make_apm_client(apm_config)
+
+# 🚀 FastAPI app initialization
+app = FastAPI()
+
+# 🧩 Add APM middleware
+app.add_middleware(ElasticAPM, client=apm)
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
+@app.get("/")
+def read_root():
+    return {"message": "Hello from FastAPI on EKS with Elastic OTEL"}
+```
+
+---
+
+## ✅ 3. .env Configuration
+
+```env
+APM_SERVICE_NAME=fastapi
+APM_SERVER_URL=https://<your-apm-endpoint>
+APM_SECRET_TOKEN=<your-secret-token>
+APM_ENVIRONMENT=production
+```
+
+> 📝 **Comment**:
+> These variables configure the APM client securely and dynamically.
+
+---
+
+## ✅ 4. OpenTelemetry Collector Config
+
+File: `k8s/otel-collector-config.yaml`
+
+```yaml
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-collector
+  namespace: opentelemetry-operator-system
+spec:
+  mode: deployment
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      batch: {}
+    exporters:
+      otlp:
+        endpoint: "https://<your-apm-endpoint>"
+        headers:
+          Authorization: "ApiKey <your-secret-token>"
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp]
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp]
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp]
+```
+
+---
+
+## ✅ 5. Dockerfile
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY .env .   # Optional; you can mount as secret too
+COPY app/ ./app
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
+```
+
+---
+
+## ✅ 6. Build & Push Docker Image to ECR
+
+```bash
+docker build -t fastapi-otel-eks .
+docker tag fastapi-otel-eks:latest <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/fastapi-otel-eks:latest
+docker push <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/fastapi-otel-eks:latest
+```
+
+---
+
+## ✅ 7. Deploy OpenTelemetry Collector
+
+```bash
+kubectl apply -f k8s/otel-collector-config.yaml
+```
+
+---
+
+## ✅ 8. Set OTLP Endpoint in Instrumentation
+
+In your `instrumentation.yaml`:
+
+```yaml
+endpoint: http://otel-collector-collector.opentelemetry-operator-system.svc.cluster.local:4318
+```
+
+---
+
+## ✅ 9. Deploy App & Instrumentation
+
+```bash
+kubectl apply -f k8s/instrumentation.yaml
+kubectl apply -f k8s/deployment.yaml
+kubectl rollout restart deployment fastapi -n fastapi-otel-eks
+```
+
+---

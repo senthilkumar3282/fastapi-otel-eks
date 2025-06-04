@@ -1,0 +1,36 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-collector
+  namespace: opentelemetry-operator-system
+spec:
+  mode: deployment
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      batch: {}
+    exporters:
+      otlp:
+        endpoint: "https://49c7a6d05adb4f5b955b7cd297e43dbc.apm.ap-south-1.aws.elastic-cloud.com:443"
+        headers:
+          Authorization: "ApiKey WOHC6jhHUQsugApXpF"
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp]
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp]
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp]

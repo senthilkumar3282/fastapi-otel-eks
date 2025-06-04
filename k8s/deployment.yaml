@@ -17,6 +17,9 @@ spec:
     spec:
       containers:
         - name: fastapi
-          image: <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/fastapi-otel-eks:latest
+          image: 349139558431.dkr.ecr.ap-south-1.amazonaws.com/fastapi-otel-eks:latest
           ports:
             - containerPort: 80
+          env:
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.name=fastapi,deployment.environment=eks"
