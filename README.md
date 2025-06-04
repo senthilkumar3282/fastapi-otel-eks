@@ -335,7 +335,7 @@ You can explore your collected data using the **data views (DDL)**:
 ---
 
 🚨 Troubleshooting: No Traces in Kubernetes
-❗ After deployment, I can’t see application-related view traces.
+❗ After deployment, I can’t see application-related traces, so i have followed below step to install elastic-apm.
 
 
 ## ✅ 1. Install Required Dependencies
