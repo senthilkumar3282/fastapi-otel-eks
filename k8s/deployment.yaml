@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi
+  namespace: fastapi-otel-eks
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fastapi
+  template:
+    metadata:
+      labels:
+        app: fastapi
+      annotations:
+        instrumentation.opentelemetry.io/inject-python: "true"
+    spec:
+      containers:
+        - name: fastapi
+          image: <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/fastapi-otel-eks:latest
+          ports:
+            - containerPort: 80

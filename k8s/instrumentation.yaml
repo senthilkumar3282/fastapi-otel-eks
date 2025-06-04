@@ -1,0 +1,13 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: fastapi-instrumentation
+  namespace: fastapi-otel-eks
+spec:
+  exporter:
+    endpoint: http://opentelemetry-collector.opentelemetry-operator-system.svc.cluster.local:4317
+  python:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-python:latest
+  sampler:
+    type: parentbased_traceidratio
+    argument: "1.0"
